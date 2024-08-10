@@ -1,18 +1,17 @@
-From ee95122e44098befbb99f790299c7b270890656f Mon Sep 17 00:00:00 2001
+From 2ceeb48c90b547c766e67221c0bbd9c15237cfd0 Mon Sep 17 00:00:00 2001
 From: Kilian von Pflugk <github@jumoog.io>
-Date: Thu, 25 Jul 2024 02:27:16 +0200
-Subject: [PATCH 3/3] add option for allowed destinations
+Date: Sat, 10 Aug 2024 14:33:05 +0200
+Subject: [PATCH] add option for allowed destinations
 
-TS_SOCKS_ALLOWED_DESTINATION Allowed destination address regular expression pattern
 ---
- net/socks5/socks5.go | 16 ++++++++++++++++
- 1 file changed, 16 insertions(+)
+ net/socks5/socks5.go | 15 +++++++++++++++
+ 1 file changed, 15 insertions(+)
 
 diff --git a/net/socks5/socks5.go b/net/socks5/socks5.go
-index b774ebe24..939cb012d 100644
+index 0d651537f..640880572 100644
 --- a/net/socks5/socks5.go
 +++ b/net/socks5/socks5.go
-@@ -19,9 +19,11 @@
+@@ -21,9 +21,11 @@
  	"io"
  	"log"
  	"net"
@@ -24,27 +23,26 @@ index b774ebe24..939cb012d 100644
  	"tailscale.com/types/logger"
  )
  
-@@ -183,6 +185,20 @@ func (c *Conn) handleRequest() error {
- 		c.clientConn.Write(buf)
- 		return fmt.Errorf("unsupported command %v", req.command)
+@@ -183,6 +185,19 @@ func (c *Conn) handleRequest() error {
+ 		return err
  	}
-+
+ 
 +	// whitelist destinations
 +	if s := envknob.String("TS_SOCKS_ALLOWED_DESTINATION"); s != "" {
-+		match, _ := regexp.MatchString(s, req.destination)
++		match, _ := regexp.MatchString(s, req.destination.addr)
 +		if !match {
-+			res := &response{reply: hostUnreachable}
++			res := errorResponse(hostUnreachable)
 +			buf, _ := res.marshal()
 +			c.clientConn.Write(buf)
 +			return fmt.Errorf("%v is not allowed", req.destination)
 +		} else {
-+			log.Printf("allow access to: %v on port: %v", req.destination, req.port)
++			log.Printf("allow access to: %v on port: %v", req.destination.addr, req.destination.port)
 +		}
 +	}
 +
  	c.request = req
- 
- 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+ 	switch req.command {
+ 	case connect:
 -- 
-2.45.2.windows.1
+2.46.0.windows.1
 

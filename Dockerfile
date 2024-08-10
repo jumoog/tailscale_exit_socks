@@ -1,5 +1,5 @@
 FROM golang:1.22-alpine AS build-env
-ARG VERSION=release-branch/1.70
+ARG VERSION=release-branch/1.72
 WORKDIR /go/src
 ENV GOFLAGS="-tags=ts_omit_aws,ts_omit_bird,ts_omit_tap,ts_omit_kube,ts_include_cli -buildvcs=false -trimpath"
 RUN apk add --no-cache git
